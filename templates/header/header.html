@@ -1,0 +1,76 @@
+<div class="header">
+  <nav class="navbar navbar-expand-lg navbar-light">
+    <div class="container-fluid">
+      <img src="{{ url_for('static', filename='images/logo1.png') }}" width="170px" height="70px" class="d-inline-block align-text-top">        
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item ml-3">
+            <a class="nav-link active" aria-current="page" href="/">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/shop">Shop</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/about-us">About Us</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/contact-us">Contact Us</a>
+          </li>
+          {% if session|length == 0 %}   
+            <li class="nav-item">
+              <a class="nav-link" href="/sign-in">Sign In/Sign Up</a>
+            </li>
+          {% endif %}
+          {% if session|length > 1 %}
+            <li class="nav-item">
+              <a href="javascript:;" class="nav-link logout">Logout</a>
+            </li>
+          {% endif %}
+        </ul>
+
+        {% if session|length > 1 %}
+          <form class="form-inline user-loggedin">
+            <span style="color: #8C2BCF">Hi, {{ session["fullName"] }}</span>
+            <span class="cart-details text-center" style="display: inline-block; background-color: red; border-radius: 10px; height: 30px; width: 30px; color:white;">0</span>
+            <a href="/checkout">
+              <img src="{{ url_for('static', filename='images/img4.png') }}" width="40px" height="40px">
+            </a>
+          </form>
+        {% endif %}
+        {% if session|length == 0 %}        
+          <form class="d-flex">
+            <img src="{{ url_for('static', filename='images/img4.png') }}" width="40px" height="40px">
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+</div>
+<script>
+  $(document).ready(function() {
+    if (localStorage.getItem('products') === null) {
+      $('.cart-details').css('display', 'none');
+    } else {
+      var existingProducts = JSON.parse(localStorage.getItem('products'));
+      $('.cart-details').text(existingProducts.length);
+      $('.cart-details').css('display', 'inline-block');
+    }
+    $(document).on('click', '.logout', function() {
+      $.ajax({
+        type: 'post',
+        url: '/logout',
+        success: function(response) {
+          if ($.trim(response) == "Success") {
+            localStorage.clear();
+            location.href = '/';
+          } else {
+            alert('Please try again');
+          }
+        }
+      });
+    });
+  });
+</script>

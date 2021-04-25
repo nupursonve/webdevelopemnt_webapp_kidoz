@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="eng">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Shop</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"> </script>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <style>
+    .btn { background: -webkit-linear-gradient(left, #7579ff, #b224ef); color: #fff;}
+    .btn:hover { background: -webkit-linear-gradient(left, #b224ef, #7579ff); color: #fff; }
+    .price { position: absolute; right: 0; margin-right: 1rem; }
+  </style>
+  <script src="https://polyfill.io/v3/polyfill.min.js?version=3.52.1&features=fetch"></script>
+  <script src="https://js.stripe.com/v3/"></script>
+  <script type="text/javascript">
+    // Create an instance of the Stripe object with your publishable API key
+    var stripe = Stripe("pk_test_51Ik6dMLoCCUJNLQCUENUKmMwpiJZneWHY47w8a6sZpdnOiEAer3Mqr73NGWcGN3PzwJ1FEPzy94iRvnkr4gkoFA900OENx7oOl");
+    $(document).ready(function() {
+      $(document).on('click', '.buy-now', function() {
+        var existingProducts = JSON.parse(localStorage.getItem('products'));
+        var products = [];
+        var totalAmount = 0;
+        for (const keys in existingProducts) {
+          products.push(existingProducts[keys].productID)
+          totalAmount += parseInt(existingProducts[keys].productPrice)
+        }
+        var productString = products.join(',');
+        $.ajax({
+          type: 'post',
+          url: '/create-checkout-session',
+          data: {
+            'totalAmount': totalAmount,
+            'products': productString
+          },
+          success: function(response) {
+            stripe.redirectToCheckout({ sessionId: response.id });
+          }
+        });        
+      });
+    });
+  </script>
+  <script type="text/javascript">
+    $(document).ready(function() {
+      if (localStorage.getItem('products') === null) {
+        $('.cart-details').css('display', 'none');
+      } else {
+        var existingProducts = JSON.parse(localStorage.getItem('products'));
+        var html = '';
+        for (const keys in existingProducts) {
+          html += '<div class="col-sm-3 mb-5"><div class="card">';
+          html += '<img src="' + existingProducts[keys]['productImage'] + '" class="img-fluid"><div class="card-body">';
+          html += '<h5 class="card-title co text-center">' + existingProducts[keys]['productName'] + '</h5>';
+          html += '<p class="card-text cop text-center display-3">€' + existingProducts[keys]['productPrice'] + '</p>';          
+          html += '</div></div></div>';
+        }
+        html += '<div class="mt-2 col-sm-12 text-center"><button class="btn btn-success w-50 buy-now">Buy</button></div>'
+        html += '<div class="mt-2 mb-5 col-sm-12 text-center"><button class="btn btn-danger clear-all w-50">Clear All</button></div>'
+        $('.row .sub-heading').after(html);
+      }
+      
+      $(document).on('click', '.clear-all', function() {
+        if (confirm('Do you really wish to clear all the items?')) {
+          localStorage.clear();
+          location.href = '/';
+        }
+      });
+
+      $(document).on('click', '.add-to-cart', function () {
+        var products = [];
+        if (localStorage.getItem('products') === null) {
+          products.push($(this).attr('product-id'));
+          localStorage.setItem('products', JSON.stringify(products)); 
+          $('.cart-details').text('1');
+        } else {
+          var existingProducts = JSON.parse(localStorage.getItem('products'));
+          existingProducts.push($(this).attr('product-id'));
+          localStorage.setItem('products', JSON.stringify(existingProducts));
+          $('.cart-details').text(existingProducts.length);
+        }
+        $('.cart-details').css('display', 'inline-block');
+        // console.log(localStorage.getItem('products'))
+      });
+    });
+  </script>
+</head>
+
+<body>
+  {% include 'header/header.html' %}
+  <div class="container-fluid" style="background-color: #ffe7f5;">
+    <div class="row">
+      <h1 class="text-center mt-3">Checkout</h1>
+      <h2 class="text-center mb-5 sub-heading">Please confirm the below items</h2>       
+    </div>
+  </div>
+  {% include 'footer/footer.html' %}
+</body>
+
+</html>
